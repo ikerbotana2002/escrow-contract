@@ -7,12 +7,13 @@ import {Escrow} from "../src/Escrow.sol";
 contract DeployEscrow is Script {
     function run() external returns (Escrow escrow) {
         address seller = vm.envAddress("SELLER_ADDRESS");
+        address arbiter = vm.envAddress("ARBITER_ADDRESS");
         uint256 amount = vm.envUint("ESCROW_AMOUNT");
         uint256 duration = vm.envUint("ESCROW_DURATION");
 
         vm.startBroadcast();
 
-        escrow = new Escrow(seller, amount, duration);
+        escrow = new Escrow(seller, amount, duration, arbiter);
 
         vm.stopBroadcast();
     }

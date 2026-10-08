@@ -10,6 +10,7 @@ contract EscrowTest is Test {
     address public buyer = address(0xB1);
     address public seller = address(0x51);
     address public attacker = address(0xA1);
+    address public arbiter = address(0xA2);
 
     uint256 public constant AMOUNT = 1 ether;
     uint256 public constant DURATION = 7 days;
@@ -19,7 +20,7 @@ contract EscrowTest is Test {
         vm.deal(attacker, 10 ether);
 
         vm.prank(buyer);
-        escrow = new Escrow(seller, AMOUNT, DURATION);
+        escrow = new Escrow(seller, AMOUNT, DURATION, arbiter);
     }
 
     function testInitialState() public view {
