@@ -8,10 +8,11 @@ contract DeployEscrow is Script {
     function run() external returns (Escrow escrow) {
         address seller = vm.envAddress("SELLER_ADDRESS");
         uint256 amount = vm.envUint("ESCROW_AMOUNT");
+        uint256 duration = vm.envUint("ESCROW_DURATION");
 
         vm.startBroadcast();
 
-        escrow = new Escrow(seller, amount, DURATION);
+        escrow = new Escrow(seller, amount, duration);
 
         vm.stopBroadcast();
     }
