@@ -11,7 +11,7 @@ contract DeployEscrow is Script {
 
         vm.startBroadcast();
 
-        escrow = new Escrow(seller, amount);
+        escrow = new Escrow(seller, amount, DURATION);
 
         vm.stopBroadcast();
     }

@@ -7,28 +7,40 @@ contract Escrow is ReentrancyGuard {
     enum State {
         CREATED,
         FUNDED,
-        RELEASED
+        RELEASED,
+        REFUNDED,
+        CANCELLED
     }
 
     address public immutable buyer;
     address public immutable seller;
 
     uint256 public immutable amount;
+    uint256 public immutable duration;
+
+    uint256 public deadline;
 
     State public state;
 
     error OnlyBuyer();
     error InvalidState();
     error IncorrectAmount();
+    error DeadlineNotReached();
     error ETHTransferFailed();
 
-    event EscrowFunded(address indexed buyer, uint256 amount);
+    event EscrowFunded(address indexed buyer, uint256 amount, uint256 deadline);
+
     event EscrowReleased(address indexed seller, uint256 amount);
 
-    constructor(address _seller, uint256 _amount) {
+    event EscrowRefunded(address indexed buyer, uint256 amount);
+
+    event EscrowCancelled(address indexed buyer);
+
+    constructor(address _seller, uint256 _amount, uint256 _duration) {
         buyer = msg.sender;
         seller = _seller;
         amount = _amount;
+        duration = _duration;
 
         state = State.CREATED;
     }
@@ -38,9 +50,10 @@ contract Escrow is ReentrancyGuard {
         if (state != State.CREATED) revert InvalidState();
         if (msg.value != amount) revert IncorrectAmount();
 
+        deadline = block.timestamp + duration;
         state = State.FUNDED;
 
-        emit EscrowFunded(msg.sender, msg.value);
+        emit EscrowFunded(msg.sender, msg.value, deadline);
     }
 
     function release() external nonReentrant {
@@ -54,5 +67,28 @@ contract Escrow is ReentrancyGuard {
         if (!success) revert ETHTransferFailed();
 
         emit EscrowReleased(seller, amount);
+    }
+
+    function refund() external nonReentrant {
+        if (msg.sender != buyer) revert OnlyBuyer();
+        if (state != State.FUNDED) revert InvalidState();
+        if (block.timestamp < deadline) revert DeadlineNotReached();
+
+        state = State.REFUNDED;
+
+        (bool success,) = payable(buyer).call{value: amount}("");
+
+        if (!success) revert ETHTransferFailed();
+
+        emit EscrowRefunded(buyer, amount);
+    }
+
+    function cancel() external {
+        if (msg.sender != buyer) revert OnlyBuyer();
+        if (state != State.CREATED) revert InvalidState();
+
+        state = State.CANCELLED;
+
+        emit EscrowCancelled(msg.sender);
     }
 }
